@@ -105,7 +105,11 @@ async def download_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # =========================
 def main():
 
-    app = Application.builder().token(BOT_TOKEN).build()
+    import os
+
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(
         CommandHandler("start", start)
