@@ -1,0 +1,36 @@
+import instaloader
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+
+TOKEN = AAE5bQQSA575rUMYh86BCibr1NYvB34f5SU
+
+loader = instaloader.Instaloader()
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("ابعت رابط بوست انستجرام وأنا أحمله لك")
+
+async def download(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    url = " ".join(context.args)
+
+    if "instagram.com" not in url:
+        await update.message.reply_text("ابعت رابط انستجرام صحيح")
+        return
+
+    try:
+        shortcode = url.split("/")[-2]
+        post = instaloader.Post.from_shortcode(loader.context, shortcode)
+
+        filename = loader.download_post(post, target="downloads")
+
+        await update.message.reply_text("تم التحميل بنجاح داخل مجلد downloads")
+
+    except Exception as e:
+        await update.message.reply_text(f"حصل خطأ: {e}")
+
+app = ApplicationBuilder().token(TOKEN).build()
+
+app.add_handler(CommandHandler("start", start))
+app.add_handler(CommandHandler("download", download))
+
+app.run_polling()
+python bot.py
