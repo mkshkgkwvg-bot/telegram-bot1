@@ -1,5 +1,5 @@
 import os
-import instaloader
+
 import yt_dlp
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, ContextTypes, filters
@@ -10,7 +10,7 @@ if not BOT_TOKEN:
     print("BOT_TOKEN is missing!")
     exit()
 
-loader = instaloader.Instaloader()
+
 
 
 # 🟢 رسالة ترحيب
@@ -46,25 +46,29 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             os.remove("video.mp4")
             return
 
-        # 📌 إنستجرام
+        
+        
+
+       # 📌 Instagram
         if "instagram.com" in url:
-            await update.message.reply_text("⏳ جاري تحميل من إنستجرام...")
+            await update.message.reply_text("⏳ جاري تحميل الفيديو من إنستجرام...")
 
-            shortcode = url.split("/")[-2]
-            post = instaloader.Post.from_shortcode(loader.context, shortcode)
+            ydl_opts = {
+                'outtmpl': 'instagram.mp4',
+                'format': 'best'
+            }
 
-            loader.download_post(post, target="downloads")
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
 
-            files = os.listdir("downloads")
-            file_path = os.path.join("downloads", files[0])
+            await update.message.reply_document(document=open("instagram.mp4", "rb"))
 
-            await update.message.reply_document(document=open(file_path, "rb"))
+            os.remove("instagram.mp4")
+            return     
+    
+        
 
-            # تنظيف
-            for f in files:
-                os.remove(os.path.join("downloads", f))
 
-            return
 
         await update.message.reply_text("❌ ابعت لينك إنستجرام أو يوتيوب صحيح")
 
