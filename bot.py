@@ -12,13 +12,13 @@ from telegram.ext import (
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-
 MENU_TEXT = """🤖 بوت تحميل احترافي ⚡
-⌁︙آهلا بكَِ اغاتي في بوت الانستكرام 🤍
-⌁︙يمكنك ايضاً التحميل من ( اليوتيوب ، انستكرام ، تيكتوك ، فيسبوك ، تويتر ، سناب شات ، ساوند كلاود )
-⌁︙تكدر تحمل اي شي يعجبك بسهولة تامة 🔥
-⌁︙لتحميل المقاطع ارسل رابط الفيديو 🎞️
-⌁︙لحميل الستوريات او الهايلايت ارسل يوزر المستخدم الى البوت 👤" "" 
+⌁︙آهلا بك اغاتي في بوت التحميل 🤍
+⌁︙يمكنك التحميل من (يوتيوب، انستكرام، تيك توك، فيسبوك، تويتر، سناب شات، ساوند كلاود)
+⌁︙تكدر تحمل أي فيديو بسهولة 🔥
+⌁︙لتحميل المقاطع أرسل رابط الفيديو 🎞️
+⌁︙لتحميل الفيديوهات أو الصوت اختار من الأزرار 👇
+"""
 
 
 # 🟢 Start
@@ -26,7 +26,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(MENU_TEXT)
 
 
-# 🟢 الرسائل
+# 🟢 Handle messages
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     url = update.message.text
 
@@ -47,7 +47,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Instagram
         if "instagram.com" in url:
-            await update.message.reply_text("⏳ خد نفسك واهدى كده يابا ببعت لك الفيديو انا اهو..")
+            await update.message.reply_text("⏳ جاري تحميل إنستكرام...")
 
             ydl_opts = {
                 "outtmpl": "insta.%(ext)s",
@@ -58,8 +58,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
 
-            await update.message.reply_document(open("insta.mp4", "rb"))
-            os.remove("insta.mp4")
+            file_path = "insta.mp4"
+            if os.path.exists(file_path):
+                with open(file_path, "rb") as f:
+                    await update.message.reply_document(f)
+                os.remove(file_path)
             return
 
         # TikTok
@@ -75,17 +78,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
 
-            await update.message.reply_document(open("tiktok.mp4", "rb"))
-            os.remove("tiktok.mp4")
+            file_path = "tiktok.mp4"
+            if os.path.exists(file_path):
+                with open(file_path, "rb") as f:
+                    await update.message.reply_document(f)
+                os.remove(file_path)
             return
 
-        await update.message.reply_text("❌ الرابط غلط يبني ابعت رابط صح ومتتعبناش")
+        await update.message.reply_text("❌ ابعت رابط صحيح يا نجم")
 
     except Exception as e:
-        await update.message.reply_text(f"⚠️ خطأ: {str(e)}")
+        await update.message.reply_text(f"⚠️ خطأ: {e}")
 
 
-# 🟢 يوتيوب (فيديو + صوت)
+# 🟢 Button handler (YouTube)
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -93,9 +99,9 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     action, url = query.data.split("|")
 
     try:
-        # 📹 فيديو
+        # 📹 Video
         if action == "video":
-            await query.message.reply_text("⏳ اهدي شويه ببعت الفديو اهو..")
+            await query.message.reply_text("⏳ جاري تحميل الفيديو...")
 
             ydl_opts = {
                 "outtmpl": "video.mp4",
@@ -106,10 +112,13 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
 
-            await query.message.reply_document(open("video.mp4", "rb"))
-            os.remove("video.mp4")
+            file_path = "video.mp4"
+            if os.path.exists(file_path):
+                with open(file_path, "rb") as f:
+                    await query.message.reply_document(f)
+                os.remove(file_path)
 
-        # 🎧 صوت
+        # 🎧 Audio
         elif action == "audio":
             await query.message.reply_text("⏳ جاري تحميل الصوت...")
 
@@ -126,14 +135,17 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
 
-            await query.message.reply_audio(open("audio.mp3", "rb"))
-            os.remove("audio.mp3")
+            file_path = "audio.mp3"
+            if os.path.exists(file_path):
+                with open(file_path, "rb") as f:
+                    await query.message.reply_audio(f)
+                os.remove(file_path)
 
     except Exception as e:
-        await query.message.reply_text(f"⚠️ خطأ: {str(e)}")
+        await query.message.reply_text(f"⚠️ خطأ: {e}")
 
 
-# 🟢 تشغيل البوت
+# 🟢 Run bot
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
