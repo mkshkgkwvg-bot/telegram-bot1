@@ -41,6 +41,29 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     url = update.message.text
 
     try:
+        if "youtube.com" in url or "youtu.be" in url:
+            await update.message.reply_text("🎬 يوتيوب: اختر من الأزرار")
+            return
+
+        if "instagram.com" in url:
+            await update.message.reply_text("⏳ جاري تحميل إنستجرام...")
+
+            ydl_opts = {
+                'outtmpl': 'video.mp4',
+                'format': 'best'
+            }
+
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
+
+            await update.message.reply_document(open("video.mp4", "rb"))
+            os.remove("video.mp4")
+            return
+
+        await update.message.reply_text("❌ ابعت لينك صحيح")
+
+    except Exception as e:
+        await update.message.reply_text(f"⚠️ خطأ: {str(e)}")
         # 📌 يوتيوب
         from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
