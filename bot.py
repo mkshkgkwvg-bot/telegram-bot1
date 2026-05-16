@@ -18,7 +18,8 @@ INSTAGRAM_URL = "https://www.instagram.com/10_e11?igsh=MTU1djJyYmZlajZuag=="
 DATA_FILE = "users.json"
 BLOCK_FILE = "blocked.json"
 
-# ---------- ملفات حفظ البيانات ----------
+
+# ---------- ملفات ----------
 def load_json(file, default):
     if not os.path.exists(file):
         return default
@@ -29,10 +30,9 @@ def save_json(file, data):
     with open(file, "w") as f:
         json.dump(data, f)
 
+
 users = load_json(DATA_FILE, {})
 blocked = load_json(BLOCK_FILE, {})
-
-ADMIN_ID = None  # حط ايديك لو عايز (اختياري)
 
 
 MENU_TEXT = """🤖 بوت التحميل ⚡
@@ -45,7 +45,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
 
     if blocked.get(user_id):
-        await update.message.reply_text("🚫 إنت محظور من استخدام البوت")
+        await update.message.reply_text("🚫 إنت محظور")
         return
 
     if users.get(user_id):
@@ -54,11 +54,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     keyboard = [
         [InlineKeyboardButton("📲 تابعني على إنستجرام", url=INSTAGRAM_URL)],
-        [InlineKeyboardButton("🔥 تم المتابعة", callback_data="verify")]
+        [InlineKeyboardButton("🔥 عملت متابعة", callback_data="verify")]
     ]
 
     await update.message.reply_text(
-        "😏 لازم تتابع الإنستا الأول",
+        "😏 تابع الإنستا الأول عشان تستخدم البوت",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
@@ -71,20 +71,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if not users.get(user_id):
-        await update.message.reply_text("😏 تابع الإنستا الأول وبعدين /start")
+        await update.message.reply_text("😏 لازم تتابع الإنستا الأول وبعدين /start")
         return
 
     url = update.message.text
 
     try:
+        # 🚫 BLOCK YOUTUBE
         if "youtube.com" in url or "youtu.be" in url:
-            keyboard = [[
-                InlineKeyboardButton("📹 فيديو", callback_data=f"video|{url}"),
-                InlineKeyboardButton("🎧 صوت", callback_data=f"audio|{url}")
-            ]]
-            await update.message.reply_text("🔥 اختار:", reply_markup=InlineKeyboardMarkup(keyboard))
+            await update.message.reply_text("😅 يا صديقي مش بيدعم تحميل روابط يوتيوب دلوقتي")
             return
 
+        # 📸 Instagram
         if "instagram.com" in url:
             await update.message.reply_text("😎 جاري تحميل إنستا...")
 
@@ -99,6 +97,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 os.remove("insta.mp4")
             return
 
+        # 🎵 TikTok
         if "tiktok.com" in url:
             await update.message.reply_text("🔥 جاري تحميل تيك توك...")
 
@@ -131,30 +130,15 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     try:
-        # ---------- Verify ----------
+        # ✅ Verify
         if data == "verify":
             users[user_id] = True
             save_json(DATA_FILE, users)
 
-            await query.message.reply_text("🔥 تم التحقق يا نجم")
+            await query.message.reply_text("🔥 تم التحقق يا نجم.. اكتب /start")
             return
 
-        # ---------- Admin commands ----------
-        if data.startswith("block_"):
-            target = data.split("_")[1]
-            blocked[target] = True
-            save_json(BLOCK_FILE, blocked)
-            await query.message.reply_text("🚫 تم الحظر")
-            return
-
-        if data.startswith("unblock_"):
-            target = data.split("_")[1]
-            blocked[target] = False
-            save_json(BLOCK_FILE, blocked)
-            await query.message.reply_text("✅ تم فك الحظر")
-            return
-
-        # ---------- Video / Audio ----------
+        # 🎬 video/audio
         action, url = data.split("|")
 
         if action == "video":
@@ -195,26 +179,20 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.reply_text(f"⚠️ خطأ: {e}")
 
 
-# ---------- Admin Panel ----------
+# ---------- Admin ----------
 async def admin(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = str(update.effective_user.id)
-
-    if ADMIN_ID and user_id != str(ADMIN_ID):
-        return
-
-    total_users = len(users)
+    total = len(users)
 
     keyboard = [
-        [InlineKeyboardButton("📊 عدد المستخدمين", callback_data="stats")],
+        [InlineKeyboardButton("📊 عدد المستخدمين", callback_data="stats")]
     ]
 
     await update.message.reply_text(
-        f"👑 لوحة التحكم\n👥 المستخدمين: {total_users}",
+        f"👑 الأدمن\n👥 المستخدمين: {total}",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 
-# ---------- Stats ----------
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -227,9 +205,11 @@ app = ApplicationBuilder().token(BOT_TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("admin", admin))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-app.add_handler(CallbackQueryHandler(button_handler))
+
 app.add_handler(CallbackQueryHandler(stats, pattern="stats"))
+app.add_handler(CallbackQueryHandler(button_handler))
+
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
 print("Bot is running...")
 app.run_polling()
