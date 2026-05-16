@@ -12,77 +12,85 @@ from telegram.ext import (
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-MENU_TEXT = """🤖 بوت تحميل احترافي ⚡
-⌁︙آهلا بك اغاتي في بوت التحميل 🤍
-⌁︙يمكنك التحميل من (يوتيوب، انستكرام، تيك توك، فيسبوك، تويتر، سناب شات، ساوند كلاود)
-⌁︙تكدر تحمل أي فيديو بسهولة 🔥
-⌁︙لتحميل المقاطع أرسل رابط الفيديو 🎞️
-⌁︙لتحميل الفيديوهات أو الصوت اختار من الأزرار 👇
-"""
+# ✅ إنستجرامك
+INSTAGRAM_URL = "https://www.instagram.com/10_e11?igsh=MTU1djJyYmZlajZuag=="
+
+MENU_TEXT = """🤖 بوت التحميل ⚡
+⌁︙تم التحقق بنجاح يا نجم 🔥
+⌁︙ابعت أي رابط وأنا أحملهولك 💪
+⌁︙يوتيوب / إنستا / تيك توك / فيسبوك / تويتر"""
+
+verified_users = set()
 
 
 # 🟢 Start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(MENU_TEXT)
+    user_id = update.effective_user.id
+
+    if user_id in verified_users:
+        await update.message.reply_text(MENU_TEXT)
+        return
+
+    keyboard = [
+        [InlineKeyboardButton("📲 تابعني على إنستجرام يا نجم", url=INSTAGRAM_URL)],
+        [InlineKeyboardButton("🔥 عملت متابعة - تحقق", callback_data="verify")]
+    ]
+
+    await update.message.reply_text(
+        "😏 لازم تتابع الإنستا الأول عشان تستخدم البوت",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
 
 
-# 🟢 Handle messages
+# 🟢 Messages
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+
+    if user_id not in verified_users:
+        await update.message.reply_text("😏 تابع الإنستا الأول وبعدين ارجع /start")
+        return
+
     url = update.message.text
 
     try:
-        # YouTube
         if "youtube.com" in url or "youtu.be" in url:
-            keyboard = [
-                [
-                    InlineKeyboardButton("📹 فيديو", callback_data=f"video|{url}"),
-                    InlineKeyboardButton("🎧 صوت", callback_data=f"audio|{url}")
-                ]
-            ]
+            keyboard = [[
+                InlineKeyboardButton("📹 فيديو", callback_data=f"video|{url}"),
+                InlineKeyboardButton("🎧 صوت", callback_data=f"audio|{url}")
+            ]]
+
             await update.message.reply_text(
-                "🎬 اختر الطريقة:",
+                "🔥 اختار يا نجم:",
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
             return
 
-        # Instagram
         if "instagram.com" in url:
-            await update.message.reply_text("⏳ جاري تحميل إنستكرام...")
+            await update.message.reply_text("😎 بحمّل من إنستا يا برو...")
 
-            ydl_opts = {
-                "outtmpl": "insta.%(ext)s",
-                "format": "best",
-                "quiet": True
-            }
+            ydl_opts = {"outtmpl": "insta.%(ext)s", "format": "best", "quiet": True}
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
 
-            file_path = "insta.mp4"
-            if os.path.exists(file_path):
-                with open(file_path, "rb") as f:
+            if os.path.exists("insta.mp4"):
+                with open("insta.mp4", "rb") as f:
                     await update.message.reply_document(f)
-                os.remove(file_path)
+                os.remove("insta.mp4")
             return
 
-        # TikTok
         if "tiktok.com" in url:
-            await update.message.reply_text("⏳ جاري تحميل تيك توك...")
+            await update.message.reply_text("🔥 جاري تحميل تيك توك...")
 
-            ydl_opts = {
-                "outtmpl": "tiktok.%(ext)s",
-                "format": "best",
-                "quiet": True
-            }
+            ydl_opts = {"outtmpl": "tiktok.%(ext)s", "format": "best", "quiet": True}
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
 
-            file_path = "tiktok.mp4"
-            if os.path.exists(file_path):
-                with open(file_path, "rb") as f:
+            if os.path.exists("tiktok.mp4"):
+                with open("tiktok.mp4", "rb") as f:
                     await update.message.reply_document(f)
-                os.remove(file_path)
+                os.remove("tiktok.mp4")
             return
 
         await update.message.reply_text("❌ ابعت رابط صحيح يا نجم")
@@ -91,7 +99,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"⚠️ خطأ: {e}")
 
 
-# 🟢 Button handler (YouTube)
+# 🟢 Buttons
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -99,28 +107,21 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     action, url = query.data.split("|")
 
     try:
-        # 📹 Video
         if action == "video":
-            await query.message.reply_text("⏳ جاري تحميل الفيديو...")
+            await query.message.reply_text("🔥 جاري تحميل الفيديو...")
 
-            ydl_opts = {
-                "outtmpl": "video.mp4",
-                "format": "best",
-                "noplaylist": True
-            }
+            ydl_opts = {"outtmpl": "video.mp4", "format": "best", "noplaylist": True}
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
 
-            file_path = "video.mp4"
-            if os.path.exists(file_path):
-                with open(file_path, "rb") as f:
+            if os.path.exists("video.mp4"):
+                with open("video.mp4", "rb") as f:
                     await query.message.reply_document(f)
-                os.remove(file_path)
+                os.remove("video.mp4")
 
-        # 🎧 Audio
         elif action == "audio":
-            await query.message.reply_text("⏳ جاري تحميل الصوت...")
+            await query.message.reply_text("🔥 جاري تحميل الصوت...")
 
             ydl_opts = {
                 "format": "bestaudio/best",
@@ -135,17 +136,21 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
 
-            file_path = "audio.mp3"
-            if os.path.exists(file_path):
-                with open(file_path, "rb") as f:
+            if os.path.exists("audio.mp3"):
+                with open("audio.mp3", "rb") as f:
                     await query.message.reply_audio(f)
-                os.remove(file_path)
+                os.remove("audio.mp3")
+
+        elif action == "verify":
+            user_id = update.effective_user.id
+            verified_users.add(user_id)
+            await query.message.reply_text("🔥 تم التحقق يا نجم.. اكتب /start")
 
     except Exception as e:
         await query.message.reply_text(f"⚠️ خطأ: {e}")
 
 
-# 🟢 Run bot
+# 🟢 Run
 app = ApplicationBuilder().token(BOT_TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
