@@ -15,16 +15,12 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 MENU_TEXT = """
 🤖 بوت تحميل احترافي ⚡
+⌁︙آهلا بكَِ اغاتي في بوت الانستكرام 🤍
+⌁︙يمكنك ايضاً التحميل من ( اليوتيوب ، انستكرام ، تيكتوك ، فيسبوك ، تويتر ، سناب شات ، ساوند كلاود )
 
-📥 ابعت أي رابط:
-- YouTube 🎬
-- Instagram 📸
-- TikTok 🎵
-
-🎬 يوتيوب فيه:
-📹 فيديو
-🎧 صوت
-"""
+⌁︙تكدر تحمل اي شي يعجبك بسهولة تامة 🔥
+⌁︙لتحميل المقاطع ارسل رابط الفيديو 🎞️
+⌁︙لحميل الستوريات او الهايلايت ارسل يوزر المستخدم الى البوت 👤
 
 
 # 🟢 Start
@@ -53,7 +49,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Instagram
         if "instagram.com" in url:
-            await update.message.reply_text("⏳ جاري تحميل إنستجرام...")
+            await update.message.reply_text("⏳ خد نفسك واهدى كده يابا ببعت لك الفيديو انا اهو..")
 
             ydl_opts = {
                 "outtmpl": "insta.%(ext)s",
@@ -85,7 +81,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             os.remove("tiktok.mp4")
             return
 
-        await update.message.reply_text("❌ ابعت رابط صحيح")
+        await update.message.reply_text("❌ الرابط غلط يبني ابعت رابط صح ومتتعبناش")
 
     except Exception as e:
         await update.message.reply_text(f"⚠️ خطأ: {str(e)}")
@@ -101,7 +97,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         # 📹 فيديو
         if action == "video":
-            await query.message.reply_text("⏳ جاري تحميل الفيديو...")
+            await query.message.reply_text("⏳ اهدي شويه ببعت الفديو اهو..")
 
             ydl_opts = {
                 "outtmpl": "video.mp4",
