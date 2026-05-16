@@ -3,6 +3,8 @@ import os
 import yt_dlp
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, ContextTypes, filters
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import CallbackQueryHandler
 MENU_TEXT = """
 🤖 Bot Menu:
 
@@ -40,23 +42,35 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         # 📌 يوتيوب
-        if "youtube.com" in url or "youtu.be" in url:
-            await update.message.reply_text("⏳ جاري تحميل الفيديو من يوتيوب...")
+        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-            ydl_opts = {
-                'outtmpl': 'video.mp4',
-                'format': 'best'
-            }
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    url = update.message.text
 
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([url])
+    if "youtube.com" in url or "youtu.be" in url:
+        keyboard = [
+            [
+                InlineKeyboardButton("📹 فيديو", callback_data=f"video|{url}"),
+                InlineKeyboardButton("🎧 صوت", callback_data=f"audio|{url}")
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
 
-            await update.message.reply_document(document=open("video.mp4", "rb"))
+        await update.message.reply_text(
+            "🎬 اختار طريقة التحميل:",
+            reply_markup=reply_markup
+        )
+        return
 
-            os.remove("video.mp4")
-            return
+        async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
 
-        
+    data = query.data
+    action, url = data.split("|")
+
+    if action == "video":
+        await query.message.reply_text("⏳ جاري تحميل الفيديو...")
         
 
        # 📌 Instagram
@@ -88,9 +102,44 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # 🟢 تشغيل البوت
 app = ApplicationBuilder().token(BOT_TOKEN).build()
+app.add_handler(CallbackQueryHandler(button_handler))
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("start", start))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
 print("Bot is running...")
 app.run_polling()
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    data = query.data
+    action, url = data.split("|")
+
+    if action == "video":
+        await query.message.reply_text("⏳ جاري تحميل الفيديو...")
+
+        ydl_opts = {
+            'outtmpl': 'video.mp4',
+            'format': 'best'
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+
+        await query.message.reply_document(document=open("video.mp4", "rb"))
+        os.remove("video.mp4")
+
+    elif action == "audio":
+        await query.message.reply_text("⏳ جاري تحميل الصوت...")
+
+        ydl_opts = {
+            'outtmpl': 'audio.mp3',
+            'format': 'bestaudio'
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+
+        await query.message.reply_audio(audio=open("audio.mp3", "rb"))
+        os.remove("audio.mp3")
