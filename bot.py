@@ -37,7 +37,10 @@ blocked = load_json(BLOCK_FILE, {})
 
 MENU_TEXT = """🤖 بوت التحميل ⚡
 ⌁︙تم التحقق بنجاح يا نجم 🔥
-⌁︙ابعت أي رابط وأنا أحملهولك 💪"""
+⌁︙يدعم:
+• إنستا 📸
+• تيك توك 🎵
+• فيسبوك 🔵"""
 
 
 # ---------- Start ----------
@@ -77,16 +80,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     url = update.message.text
 
     try:
-        # 🚫 BLOCK YOUTUBE
+        # 🚫 YouTube
         if "youtube.com" in url or "youtu.be" in url:
-            await update.message.reply_text("😅 يا صديقي مش بيدعم تحميل روابط يوتيوب دلوقتي")
+            await update.message.reply_text("😅 يا صديقي مش بيدعم تحميل يوتيوب")
             return
 
         # 📸 Instagram
         if "instagram.com" in url:
             await update.message.reply_text("😎 جاري تحميل إنستا...")
 
-            ydl_opts = {"outtmpl": "insta.%(ext)s", "format": "best", "quiet": True}
+            ydl_opts = {
+                "outtmpl": "insta.%(ext)s",
+                "format": "best",
+                "quiet": True
+            }
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
@@ -95,13 +102,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 with open("insta.mp4", "rb") as f:
                     await update.message.reply_document(f)
                 os.remove("insta.mp4")
+
             return
 
         # 🎵 TikTok
         if "tiktok.com" in url:
             await update.message.reply_text("🔥 جاري تحميل تيك توك...")
 
-            ydl_opts = {"outtmpl": "tiktok.%(ext)s", "format": "best", "quiet": True}
+            ydl_opts = {
+                "outtmpl": "tiktok.%(ext)s",
+                "format": "best",
+                "quiet": True
+            }
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])
@@ -110,9 +122,30 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 with open("tiktok.mp4", "rb") as f:
                     await update.message.reply_document(f)
                 os.remove("tiktok.mp4")
+
             return
 
-        await update.message.reply_text("❌ ابعت رابط صحيح")
+        # 🔵 Facebook
+        if "facebook.com" in url or "fb.watch" in url:
+            await update.message.reply_text("🔵 جاري تحميل فيديو الفيسبوك...")
+
+            ydl_opts = {
+                "outtmpl": "facebook.%(ext)s",
+                "format": "best",
+                "quiet": True
+            }
+
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
+
+            if os.path.exists("facebook.mp4"):
+                with open("facebook.mp4", "rb") as f:
+                    await update.message.reply_document(f)
+                os.remove("facebook.mp4")
+
+            return
+
+        await update.message.reply_text("❌ الرابط غير مدعوم")
 
     except Exception as e:
         await update.message.reply_text(f"⚠️ خطأ: {e}")
@@ -137,43 +170,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             await query.message.reply_text("🔥 تم التحقق يا نجم.. اكتب /start")
             return
-
-        # 🎬 video/audio
-        action, url = data.split("|")
-
-        if action == "video":
-            await query.message.reply_text("🔥 جاري التحميل...")
-
-            ydl_opts = {"outtmpl": "video.mp4", "format": "best", "noplaylist": True}
-
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([url])
-
-            if os.path.exists("video.mp4"):
-                with open("video.mp4", "rb") as f:
-                    await query.message.reply_document(f)
-                os.remove("video.mp4")
-
-        elif action == "audio":
-            await query.message.reply_text("🔥 جاري الصوت...")
-
-            ydl_opts = {
-                "format": "bestaudio/best",
-                "outtmpl": "audio.%(ext)s",
-                "postprocessors": [{
-                    "key": "FFmpegExtractAudio",
-                    "preferredcodec": "mp3",
-                    "preferredquality": "192"
-                }]
-            }
-
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([url])
-
-            if os.path.exists("audio.mp3"):
-                with open("audio.mp3", "rb") as f:
-                    await query.message.reply_audio(f)
-                os.remove("audio.mp3")
 
     except Exception as e:
         await query.message.reply_text(f"⚠️ خطأ: {e}")
